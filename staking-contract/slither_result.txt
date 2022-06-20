@@ -1,0 +1,258 @@
+Pragma version^0.8.0 (IERC20.sol#4) allows old versions
+Pragma version^0.8.0 (IERC20Metadata.sol#4) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+
+Pragma version^0.8.0 (IERC20.sol#4) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+
+StakingContract.issueTokens() (StakingContract.sol#49-56) ignores return value by projectToken.transfer(recipient,userTotalValue) (StakingContract.sol#54)
+StakingContract.stakeTokens(uint256,address) (StakingContract.sol#103-123) ignores return value by IERC20(_token).transferFrom(msg.sender,address(this),_amount) (StakingContract.sol#109)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unchecked-transfer
+
+StakingContract.addAllowedTokens(address) (StakingContract.sol#159-163) ignores return value by IERC20(_token).approve(address(lendingProtocol),type()(uint256).max) (StakingContract.sol#161)
+StakingContract.changeLendingProtocol(address) (StakingContract.sol#176-187) ignores return value by IERC20(allowedTokens[i]).approve(address(lendingProtocol),type()(uint256).max) (StakingContract.sol#181-184)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unused-return
+
+StakingContract.getTokenValue(address) (StakingContract.sol#88-100) has external calls inside a loop: (price) = priceFeed.latestRoundData() (StakingContract.sol#97)
+StakingContract.getTokenValue(address) (StakingContract.sol#88-100) has external calls inside a loop: decimals = uint256(priceFeed.decimals()) (StakingContract.sol#98)
+StakingContract.issueTokens() (StakingContract.sol#49-56) has external calls inside a loop: projectToken.transfer(recipient,userTotalValue) (StakingContract.sol#54)
+StakingContract.changeLendingProtocol(address) (StakingContract.sol#176-187) has external calls inside a loop: IERC20(allowedTokens[i]).approve(address(lendingProtocol),type()(uint256).max) (StakingContract.sol#181-184)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation/#calls-inside-a-loop
+
+Reentrancy in StakingContract.stakeTokens(uint256,address) (StakingContract.sol#103-123):
+        External calls:
+        - IERC20(_token).transferFrom(msg.sender,address(this),_amount) (StakingContract.sol#109)
+        State variables written after the call(s):
+        - stakers.push(msg.sender) (StakingContract.sol#117)
+        - stakingBalance[_token][msg.sender] = stakingBalance[_token][msg.sender] + _amount (StakingContract.sol#111-113)
+        - updateUniqueTokensStaked(msg.sender,_token) (StakingContract.sol#110)
+                - uniqueTokensStaked[_user] = uniqueTokensStaked[_user] + 1 (StakingContract.sol#154)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-2
+
+Reentrancy in StakingContract.addAllowedTokens(address) (StakingContract.sol#159-163):
+        External calls:
+        - IERC20(_token).approve(address(lendingProtocol),type()(uint256).max) (StakingContract.sol#161)
+        Event emitted after the call(s):
+        - TokenAdded(_token) (StakingContract.sol#162)
+Reentrancy in StakingContract.stakeTokens(uint256,address) (StakingContract.sol#103-123):
+        External calls:
+        - IERC20(_token).transferFrom(msg.sender,address(this),_amount) (StakingContract.sol#109)
+        - lendingProtocol.deposit(_token,_amount,address(this)) (StakingContract.sol#121)
+        Event emitted after the call(s):
+        - TokenStaked(_token,msg.sender,_amount) (StakingContract.sol#122)
+Reentrancy in StakingContract.unstakeTokens(address) (StakingContract.sol#126-149):
+        External calls:
+        - require(bool,string)(lendingProtocol.withdraw(_token,balance,msg.sender) > 0,StakingContract: withdraw error) (StakingContract.sol#141-144)
+        Event emitted after the call(s):
+        - TokenUnstaked(_token,msg.sender,balance) (StakingContract.sol#145)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-3
+
+StakingContract.unstakeTokens(address) (StakingContract.sol#126-149) has costly operations inside a loop:
+        - stakers.pop() (StakingContract.sol#135)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#costly-operations-inside-a-loop
+
+Context._msgData() (Context.sol#21-23) is never used and should be removed
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
+
+Pragma version^0.8.0 (AggregatorV3Interface.sol#2) allows old versions
+Pragma version^0.8.0 (Context.sol#4) allows old versions
+Pragma version^0.8.0 (IERC20.sol#4) allows old versions
+Pragma version^0.8.0 (ILendingPool.sol#4) allows old versions
+Pragma version^0.8.0 (ILendingPoolProvider.sol#4) allows old versions
+Pragma version^0.8.0 (ILendingProtocol.sol#2) allows old versions
+Pragma version^0.8.0 (Ownable.sol#4) allows old versions
+Pragma version^0.8.0 (StakingContract.sol#2) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+
+Parameter StakingContract.setPriceFeedContract(address,address)._token (StakingContract.sol#40) is not in mixedCase
+Parameter StakingContract.setPriceFeedContract(address,address)._priceFeed (StakingContract.sol#40) is not in mixedCase
+Parameter StakingContract.getUserTotalValue(address)._user (StakingContract.sol#59) is not in mixedCase
+Parameter StakingContract.getUserSingleTokenValue(address,address)._user (StakingContract.sol#73) is not in mixedCase
+Parameter StakingContract.getUserSingleTokenValue(address,address)._token (StakingContract.sol#73) is not in mixedCase
+Parameter StakingContract.getTokenValue(address)._token (StakingContract.sol#88) is not in mixedCase
+Parameter StakingContract.stakeTokens(uint256,address)._amount (StakingContract.sol#103) is not in mixedCase
+Parameter StakingContract.stakeTokens(uint256,address)._token (StakingContract.sol#103) is not in mixedCase
+Parameter StakingContract.unstakeTokens(address)._token (StakingContract.sol#126) is not in mixedCase
+Parameter StakingContract.updateUniqueTokensStaked(address,address)._user (StakingContract.sol#152) is not in mixedCase
+Parameter StakingContract.updateUniqueTokensStaked(address,address)._token (StakingContract.sol#152) is not in mixedCase
+Parameter StakingContract.addAllowedTokens(address)._token (StakingContract.sol#159) is not in mixedCase
+Parameter StakingContract.tokenIsAllowed(address)._token (StakingContract.sol#166) is not in mixedCase
+Parameter StakingContract.changeLendingProtocol(address)._lendingProtocol (StakingContract.sol#176) is not in mixedCase
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+
+renounceOwnership() should be declared external:
+        - Ownable.renounceOwnership() (Ownable.sol#64-66)
+transferOwnership(address) should be declared external:
+        - Ownable.transferOwnership(address) (Ownable.sol#72-78)
+setPriceFeedContract(address,address) should be declared external:
+        - StakingContract.setPriceFeedContract(address,address) (StakingContract.sol#40-45)
+issueTokens() should be declared external:
+        - StakingContract.issueTokens() (StakingContract.sol#49-56)
+stakeTokens(uint256,address) should be declared external:
+        - StakingContract.stakeTokens(uint256,address) (StakingContract.sol#103-123)
+unstakeTokens(address) should be declared external:
+        - StakingContract.unstakeTokens(address) (StakingContract.sol#126-149)
+addAllowedTokens(address) should be declared external:
+        - StakingContract.addAllowedTokens(address) (StakingContract.sol#159-163)
+changeLendingProtocol(address) should be declared external:
+        - StakingContract.changeLendingProtocol(address) (StakingContract.sol#176-187)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#public-function-that-could-be-declared-external
+
+Pragma version^0.8.0 (ILendingProtocol.sol#2) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+
+Context._msgData() (Context.sol#21-23) is never used and should be removed
+ERC20._burn(address,uint256) (ERC20.sol#316-331) is never used and should be removed
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
+
+Pragma version^0.8.0 (Context.sol#4) allows old versions
+Pragma version^0.8.0 (ERC20.sol#4) allows old versions
+Pragma version^0.8.0 (IERC20.sol#4) allows old versions
+Pragma version^0.8.0 (IERC20Metadata.sol#4) allows old versions
+Pragma version^0.8.0 (ProjectToken.sol#3) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+
+name() should be declared external:
+        - ERC20.name() (ERC20.sol#62-64)
+symbol() should be declared external:
+        - ERC20.symbol() (ERC20.sol#70-72)
+decimals() should be declared external:
+        - ERC20.decimals() (ERC20.sol#87-89)
+totalSupply() should be declared external:
+        - ERC20.totalSupply() (ERC20.sol#94-96)
+balanceOf(address) should be declared external:
+        - ERC20.balanceOf(address) (ERC20.sol#101-109)
+transfer(address,uint256) should be declared external:
+        - ERC20.transfer(address,uint256) (ERC20.sol#119-128)
+approve(address,uint256) should be declared external:
+        - ERC20.approve(address,uint256) (ERC20.sol#153-162)
+transferFrom(address,address,uint256) should be declared external:
+        - ERC20.transferFrom(address,address,uint256) (ERC20.sol#180-189)
+increaseAllowance(address,uint256) should be declared external:
+        - ERC20.increaseAllowance(address,uint256) (ERC20.sol#203-211)
+decreaseAllowance(address,uint256) should be declared external:
+        - ERC20.decreaseAllowance(address,uint256) (ERC20.sol#227-243)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#public-function-that-could-be-declared-external
+
+Context._msgData() (Context.sol#21-23) is never used and should be removed
+Context._msgSender() (Context.sol#17-19) is never used and should be removed
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
+
+Pragma version^0.8.0 (Context.sol#4) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+
+Context._msgData() (Context.sol#21-23) is never used and should be removed
+ERC20._burn(address,uint256) (ERC20.sol#316-331) is never used and should be removed
+ERC20._mint(address,uint256) (ERC20.sol#293-303) is never used and should be removed
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
+
+Pragma version^0.8.0 (Context.sol#4) allows old versions
+Pragma version^0.8.0 (ERC20.sol#4) allows old versions
+Pragma version^0.8.0 (IERC20.sol#4) allows old versions
+Pragma version^0.8.0 (IERC20Metadata.sol#4) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+
+name() should be declared external:
+        - ERC20.name() (ERC20.sol#62-64)
+symbol() should be declared external:
+        - ERC20.symbol() (ERC20.sol#70-72)
+decimals() should be declared external:
+        - ERC20.decimals() (ERC20.sol#87-89)
+totalSupply() should be declared external:
+        - ERC20.totalSupply() (ERC20.sol#94-96)
+balanceOf(address) should be declared external:
+        - ERC20.balanceOf(address) (ERC20.sol#101-109)
+transfer(address,uint256) should be declared external:
+        - ERC20.transfer(address,uint256) (ERC20.sol#119-128)
+approve(address,uint256) should be declared external:
+        - ERC20.approve(address,uint256) (ERC20.sol#153-162)
+transferFrom(address,address,uint256) should be declared external:
+        - ERC20.transferFrom(address,address,uint256) (ERC20.sol#180-189)
+increaseAllowance(address,uint256) should be declared external:
+        - ERC20.increaseAllowance(address,uint256) (ERC20.sol#203-211)
+decreaseAllowance(address,uint256) should be declared external:
+        - ERC20.decreaseAllowance(address,uint256) (ERC20.sol#227-243)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#public-function-that-could-be-declared-external
+
+AaveLending.deposit(address,uint256,address) (AaveLending.sol#29-40) ignores return value by IERC20(_token).transferFrom(msg.sender,address(this),_amount) (AaveLending.sol#37)
+AaveLending.drainToken(address) (AaveLending.sol#57-60) ignores return value by token.transfer(msg.sender,token.balanceOf(address(this))) (AaveLending.sol#59)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unchecked-transfer
+
+AaveLending.deposit(address,uint256,address) (AaveLending.sol#29-40) ignores return value by IERC20(_token).approve(address(pool),_amount) (AaveLending.sol#38)
+AaveLending.withdraw(address,uint256,address) (AaveLending.sol#42-55) ignores return value by pool.withdraw(_token,_amount,_to) (AaveLending.sol#52)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unused-return
+
+AaveLending.setStakingContract(address) (AaveLending.sol#25-27) should emit an event for: 
+        - stakingContract = _stakingContract (AaveLending.sol#26) 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-events-access-control
+
+AaveLending.setStakingContract(address)._stakingContract (AaveLending.sol#25) lacks a zero-check on :
+                - stakingContract = _stakingContract (AaveLending.sol#26)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-zero-address-validation
+
+Context._msgData() (Context.sol#21-23) is never used and should be removed
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
+
+Pragma version^0.8.0 (AaveLending.sol#2) allows old versions
+Pragma version^0.8.0 (Context.sol#4) allows old versions
+Pragma version^0.8.0 (IERC20.sol#4) allows old versions
+Pragma version^0.8.0 (ILendingPool.sol#4) allows old versions
+Pragma version^0.8.0 (ILendingPoolProvider.sol#4) allows old versions
+Pragma version^0.8.0 (ILendingProtocol.sol#2) allows old versions
+Pragma version^0.8.0 (Ownable.sol#4) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+
+Parameter AaveLending.setStakingContract(address)._stakingContract (AaveLending.sol#25) is not in mixedCase
+Parameter AaveLending.deposit(address,uint256,address)._token (AaveLending.sol#30) is not in mixedCase
+Parameter AaveLending.deposit(address,uint256,address)._amount (AaveLending.sol#31) is not in mixedCase
+Parameter AaveLending.withdraw(address,uint256,address)._token (AaveLending.sol#43) is not in mixedCase
+Parameter AaveLending.withdraw(address,uint256,address)._amount (AaveLending.sol#44) is not in mixedCase
+Parameter AaveLending.withdraw(address,uint256,address)._to (AaveLending.sol#45) is not in mixedCase
+Parameter AaveLending.drainToken(address)._token (AaveLending.sol#57) is not in mixedCase
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+
+setStakingContract(address) should be declared external:
+        - AaveLending.setStakingContract(address) (AaveLending.sol#25-27)
+drainToken(address) should be declared external:
+        - AaveLending.drainToken(address) (AaveLending.sol#57-60)
+renounceOwnership() should be declared external:
+        - Ownable.renounceOwnership() (Ownable.sol#64-66)
+transferOwnership(address) should be declared external:
+        - Ownable.transferOwnership(address) (Ownable.sol#72-78)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#public-function-that-could-be-declared-external
+
+Pragma version^0.8.0 (AggregatorV3Interface.sol#2) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+
+Pragma version^0.8.0 (ILendingPoolProvider.sol#4) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+
+Context._msgData() (Context.sol#21-23) is never used and should be removed
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
+
+Pragma version^0.8.0 (Context.sol#4) allows old versions
+Pragma version^0.8.0 (Ownable.sol#4) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+
+renounceOwnership() should be declared external:
+        - Ownable.renounceOwnership() (Ownable.sol#64-66)
+transferOwnership(address) should be declared external:
+        - Ownable.transferOwnership(address) (Ownable.sol#72-78)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#public-function-that-could-be-declared-external
+
+Pragma version^0.8.0 (ILendingPool.sol#4) allows old versions
+Pragma version^0.8.0 (ILendingPoolProvider.sol#4) allows old versions
+solc-0.8.0 is not recommended for deployment
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+. analyzed (35 contracts with 78 detectors), 131 result(s) found
