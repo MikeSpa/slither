@@ -30,6 +30,7 @@ contract StakingContract is Ownable {
         uint256 amount
     );
     event LendingProtocolChanged(address newProtocol, address oldProtocol);
+    event IssueTokenFailed(address receiver, uint256 amount);
 
     constructor(address _projectTokenAddress, address _lendingProtocol) {
         projectToken = IERC20(_projectTokenAddress);
@@ -51,7 +52,10 @@ contract StakingContract is Ownable {
         for (uint256 i = 0; i < stakers.length; i++) {
             address recipient = stakers[i];
             uint256 userTotalValue = getUserTotalValue(recipient);
-            projectToken.transfer(recipient, userTotalValue);
+            bool result = projectToken.transfer(recipient, userTotalValue);
+            if (!result) {
+                emit IssueTokenFailed(recipient, userTotalValue);
+            }
         }
     }
 
@@ -106,7 +110,10 @@ contract StakingContract is Ownable {
             tokenIsAllowed(_token),
             "StakingContract: Token is currently no allowed"
         );
-        IERC20(_token).transferFrom(msg.sender, address(this), _amount);
+        require(
+            IERC20(_token).transferFrom(msg.sender, address(this), _amount),
+            "StakingContract: transferFrom() failed"
+        );
         updateUniqueTokensStaked(msg.sender, _token);
         stakingBalance[_token][msg.sender] =
             stakingBalance[_token][msg.sender] +
@@ -158,7 +165,10 @@ contract StakingContract is Ownable {
     // add a new token to the list of stable token
     function addAllowedTokens(address _token) public onlyOwner {
         allowedTokens.push(_token);
-        IERC20(_token).approve(address(lendingProtocol), type(uint256).max);
+        require(
+            IERC20(_token).approve(address(lendingProtocol), type(uint256).max),
+            "StakingContract: approve() failed"
+        );
         emit TokenAdded(_token);
     }
 
@@ -178,9 +188,12 @@ contract StakingContract is Ownable {
         address oldProtocol = address(lendingProtocol);
         lendingProtocol = ILendingProtocol(_lendingProtocol);
         for (uint256 i = 0; i < allowedTokens.length; i++) {
-            IERC20(allowedTokens[i]).approve(
-                address(lendingProtocol),
-                type(uint256).max
+            require(
+                IERC20(allowedTokens[i]).approve(
+                    address(lendingProtocol),
+                    type(uint256).max
+                ),
+                "StakingContract: approve() failed"
             );
         }
         emit LendingProtocolChanged(_lendingProtocol, oldProtocol);
