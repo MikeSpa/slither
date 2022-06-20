@@ -34,8 +34,14 @@ contract AaveLending is ILendingProtocol, Ownable {
         // LendingPool.deposit calls
         // IERC20(asset).safeTransferFrom(msg.sender, aToken, amount);
         // so this contract need the have the funds, cant just be a middleman
-        IERC20(_token).transferFrom(msg.sender, address(this), _amount);
-        IERC20(_token).approve(address(pool), _amount); //TODO general approve per asset
+        require(
+            IERC20(_token).transferFrom(msg.sender, address(this), _amount),
+            "AaveLending: transferFrom() failed"
+        );
+        require(
+            IERC20(_token).approve(address(pool), _amount),
+            "AaveLending: approve() failed"
+        ); //TODO general approve per asset
         pool.deposit(_token, _amount, address(this), 0);
     }
 
@@ -49,13 +55,18 @@ contract AaveLending is ILendingProtocol, Ownable {
         onlyStakingContract
         returns (uint256)
     {
-        pool.withdraw(_token, _amount, _to);
+        // set _amount to type(uint256).max to withdraw the entire balance
+        // need to return what is actually withdrawn
+        uint256 amountWithdrawn = pool.withdraw(_token, _amount, _to);
 
-        return _amount;
+        return amountWithdrawn;
     }
 
     function drainToken(address _token) public onlyOwner {
         IERC20 token = IERC20(_token);
-        token.transfer(msg.sender, token.balanceOf(address(this)));
+        require(
+            token.transfer(msg.sender, token.balanceOf(address(this))),
+            "AaveLending: transfer() failed"
+        );
     }
 }
