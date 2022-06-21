@@ -10,6 +10,8 @@ contract AaveLending is ILendingProtocol, Ownable {
     ILendingPool public pool;
     address public stakingContract;
 
+    event StakingContractChange(address newContract);
+
     modifier onlyStakingContract() {
         require(
             msg.sender == stakingContract,
@@ -22,8 +24,13 @@ contract AaveLending is ILendingProtocol, Ownable {
         pool = ILendingPool(_pool);
     }
 
-    function setStakingContract(address _stakingContract) public onlyOwner {
+    function setStakingContract(address _stakingContract) external onlyOwner {
+        require(
+            _stakingContract != address(0),
+            "AaveLending: address given is 0x0"
+        );
         stakingContract = _stakingContract;
+        emit StakingContractChange(_stakingContract);
     }
 
     function deposit(
@@ -62,7 +69,7 @@ contract AaveLending is ILendingProtocol, Ownable {
         return amountWithdrawn;
     }
 
-    function drainToken(address _token) public onlyOwner {
+    function drainToken(address _token) external onlyOwner {
         IERC20 token = IERC20(_token);
         require(
             token.transfer(msg.sender, token.balanceOf(address(this))),
