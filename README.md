@@ -35,3 +35,114 @@ The following flags are supported:
     "legacy_ast": false
 }
 ```
+
+# Vunerabilities found in StakingContract
+
+## Uncheck-transfer
+[Docs](https://github.com/crytic/slither/wiki/Detector-Documentation#unchecked-transfer)
+
+Several tokens do not revert in case of failure and return false. If one of these tokens is used in `stakeTokens()`, it will not revert if the transfer fails, and an attacker can increase its `stakingBalance` for free.
+
+```solidity
+function stakeTokens(uint256 _amount, address _token) external {
+    //...
+    IERC20(_token).transferFrom(msg.sender, address(this), _amount);
+    stakingBalance[_token][msg.sender] =
+        stakingBalance[_token][msg.sender] +
+        _amount;
+
+    //...
+}
+```
+Fix:
+```solidity
+function stakeTokens(uint256 _amount, address _token) external {
+    //...
+    require(
+        IERC20(_token).transferFrom(msg.sender, address(this), _amount),
+        "StakingContract: transferFrom() failed"
+    );
+    stakingBalance[_token][msg.sender] =
+        stakingBalance[_token][msg.sender] +
+        _amount;
+
+    //...
+}
+```
+
+## Unused-return
+[Docs](https://github.com/crytic/slither/wiki/Detector-Documentation#unused-return)
+
+Similar to uncheck-transfer except more general. The return value of an external call is not stored in a local or state variable.
+
+## Reentrancy-benign
+[Docs](https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-2)  
+Reentrancy that acts as a double call:
+
+```solidity
+function stakeTokens(uint256 _amount, address _token) external {
+    require(_amount > 0, "StakingContract: Amount must be greater than 0");
+    require(
+        tokenIsAllowed(_token),
+        "StakingContract: Token is currently no allowed"
+    );
+    require(
+        IERC20(_token).transferFrom(msg.sender, address(this), _amount),
+        "StakingContract: transferFrom() failed"
+    );
+    _updateUniqueTokensStaked(msg.sender, _token);
+    stakingBalance[_token][msg.sender] =
+        stakingBalance[_token][msg.sender] +
+        _amount;
+
+    // add user to stakers list pnly if this is their first staking
+    if (uniqueTokensStaked[msg.sender] == 1) {
+        stakers.push(msg.sender);
+    }
+
+    //deposit on lending protocol
+    lendingProtocol.deposit(_token, _amount, address(this));
+    emit TokenStaked(_token, msg.sender, _amount);
+}
+```
+But you cannot really exploit this reentrancy plus the external call `transferFrom()` is only executed on trusted and pre-approved token addresses.
+
+## Reentrancy-events
+[Docs](https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-3)  
+Reentrancies leading to out-of-order events.
+
+```solidity
+function addAllowedTokens(address _token) external onlyOwner {
+    allowedTokens.push(_token);
+    require(
+        IERC20(_token).approve(address(lendingProtocol), type(uint256).max),
+        "StakingContract: approve() failed"
+    );
+    emit TokenAdded(_token);
+}
+```
+Here again, external calls are always on approved token addresses.
+
+# Optimizations in StakingContract
+
+## External-function
+[Docs](https://github.com/crytic/slither/wiki/Detector-Documentation#public-function-that-could-be-declared-external)  
+public functions that are never called by the contract should be declared external to save gas.
+
+`function unstakeTokens(address _token) external` intead of `function unstakeTokens(address _token) public`.
+
+## Costly-loop
+[Docs](https://github.com/crytic/slither/wiki/Detector-Documentation#costly-operations-inside-a-loop)
+
+Costly operations inside a loop might waste gas, so optimizations are justified.
+```solidity
+for (uint256 i = 0; i < stakers.length; i++) {
+    if (stakers[i] == msg.sender) {
+        stakers[i] = stakers[stakers.length - 1];
+        stakers.pop(); //expensive
+        break;
+    }
+}
+```
+But even though the costly operation is in a loop, we only do it once. But we can add a `break` to exit the loop earlier.
+
