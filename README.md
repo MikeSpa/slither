@@ -144,5 +144,94 @@ for (uint256 i = 0; i < stakers.length; i++) {
     }
 }
 ```
-But even though the costly operation is in a loop, we only do it once. But we can add a `break` to exit the loop earlier.
+But even though the costly operation is in a loop, we only do it once. But we can add a `break` to exit the loop earlier
+
+
+
+# Vunerabilities found in AaveLending
+
+## Unchecked-transfer
+
+Similar to StakingContract.
+
+## Unused-return
+
+```solidity
+function withdraw(address _token,uint256 _amount,address _to)
+    external
+    override(ILendingProtocol)
+    onlyStakingContract
+    returns (uint256)
+{
+    
+    pool.withdraw(_token, _amount, _to); //unsued return value
+
+    return _amount_;
+}
+```
+Fix:
+```solidity
+function withdraw(address _token,uint256 _amount,address _to)
+    external
+    override(ILendingProtocol)
+    onlyStakingContract
+    returns (uint256)
+{
+    
+    uint256 amountWithdrawn = pool.withdraw(_token, _amount, _to);
+
+    return amountWithdrawn;
+}
+```
+We need to use the return value of `withdraw()` to return it to `StakingContract`. `_amount` is not always the amount of funds that is withdrawn.
+
+
+# Optimizations found in AaveLending
+
+## Events-access
+[Docs](https://github.com/crytic/slither/wiki/Detector-Documentation#missing-events-access-control)
+
+Detect missing events for critical access control parameters.  
+setStakingContract() has no event, so it is difficult to track off-chain staking contract changes.
+```solidity
+function setStakingContract(address _stakingContract) external onlyOwner {
+    stakingContract = _stakingContract;
+}
+```
+Fix:
+```solidity
+event StakingContractChange(address newContract);
+function setStakingContract(address _stakingContract) external onlyOwner {
+    stakingContract = _stakingContract;
+    emit StakingContractChange(_stakingContract);
+}
+```
+## Missing-zero-check
+[Docs](https://github.com/crytic/slither/wiki/Detector-Documentation#missing-zero-address-validation)
+
+Detect missing zero address validation.
+
+```solidity
+function setStakingContract(address _stakingContract) external onlyOwner {
+    stakingContract = _stakingContract;
+    emit StakingContractChange(_stakingContract);
+}
+```
+Fix:
+```solidity
+function setStakingContract(address _stakingContract) external onlyOwner {
+    require(
+        _stakingContract != address(0),
+        "AaveLending: address given is 0x0"
+    );
+    stakingContract = _stakingContract;
+    emit StakingContractChange(_stakingContract);
+}
+```
+We simply add a check to make sure the new address is not 0x0.
+
+## External-function
+
+Similar to StakingContract.
+
 
