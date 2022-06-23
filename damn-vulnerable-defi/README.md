@@ -11,3 +11,6 @@ UnstoppableLender.flashLoan(uint256) (unstoppable/UnstoppableLender.sol#32-53) u
         - assert(bool)(poolBalance == balanceBefore) (unstoppable/UnstoppableLender.sol#39)
 Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dangerous-strict-equalities
 
+## 2) Naive Receiver
+
+Detector can't find the vulnerability but we can write a simple script that check whether the contract has an accessable function (`public`, `external` with no `onlyOwner()` modifier) that makes a risky call, i.e. `transfer()` or `approve()`.
