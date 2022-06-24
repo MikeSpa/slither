@@ -41,3 +41,38 @@ Not applicable
 ## 7) Compromised
 
 Not applicable
+
+## 10) Free Rider
+
+Slither immediately detects the main vulnerability: Detect the use of msg.value inside a loop.
+
+```solidity
+function buyMany(uint256[] calldata tokenIds) external payable nonReentrant {
+    for (uint256 i = 0; i < tokenIds.length; i++) {
+        _buyOne(tokenIds[i]);
+    }
+}
+
+function _buyOne(uint256 tokenId) private {       
+    uint256 priceToPay = offers[tokenId];
+    require(priceToPay > 0, "Token is not being offered");
+
+    // HERE
+    require(msg.value >= priceToPay, "Amount paid is not enough");
+
+    amountOfOffers--;
+
+    // transfer from seller to buyer
+    token.safeTransferFrom(token.ownerOf(tokenId), msg.sender, tokenId);
+
+    // pay seller
+    payable(token.ownerOf(tokenId)).sendValue(priceToPay);
+
+    emit NFTBought(msg.sender, tokenId, priceToPay);
+}    
+```
+The contract should track msg.value through a local variable and decrease its amount on every iteration/usage.
+
+
+FreeRiderNFTMarketplace._buyOne(uint256) (free-rider/FreeRiderNFTMarketplace.sol#68-83) use msg.value in a loop: require(bool,string)(msg.value >= priceToPay,Amount paid is not enough) (free-rider/FreeRiderNFTMarketplace.sol#72)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation/#msgvalue-inside-a-loop
