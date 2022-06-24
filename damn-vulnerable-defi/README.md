@@ -25,3 +25,8 @@ But the script for the last challenge show us the call that allow the exploit:
 ```solidity
 target.functionCall(data);
 ```
+
+## 4) Side Entrance
+
+Here there is not much we can do with Slither.
+
