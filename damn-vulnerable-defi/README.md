@@ -30,3 +30,14 @@ target.functionCall(data);
 
 Here there is not much we can do with Slither.
 
+## 5) The Rewarder
+
+Not applicable
+
+## 6) Selfie
+
+Not applicable
+
+## 7) Compromised
+
+Not applicable
